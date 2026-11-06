@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista della Spesa</title>
+<style>
+  :root {
+    --bg: #f6f7f3;
+    --card: #ffffff;
+    --text: #1f2a1f;
+    --muted: #6b766b;
+    --accent: #2f8f4e;
+    --accent-soft: #e3f3e8;
+    --border: #dde3dc;
+    --danger: #c0392b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141814;
+      --card: #1d231d;
+      --text: #e8eee8;
+      --muted: #9aa69a;
+      --accent: #4cbb6e;
+      --accent-soft: #233528;
+      --border: #2e372e;
+      --danger: #e5675a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 18px 16px;
+    text-align: center;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 0;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .tabs button {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .tabs button.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  h2 { font-size: 1.1rem; margin: 0 0 10px; }
+  h3 {
+    font-size: 0.95rem;
+    margin: 14px 0 6px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .full { grid-column: 1 / -1; }
+  .btn {
+    padding: 11px 16px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .btn.secondary { background: var(--accent-soft); color: var(--accent); }
+  .btn.small { padding: 6px 10px; font-size: 0.85rem; }
+  .btn.danger { background: transparent; color: var(--danger); }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .row:last-child { border-bottom: none; }
+  .row input[type=checkbox] { width: 22px; height: 22px; flex-shrink: 0; accent-color: var(--accent); }
+  .info { flex: 1; min-width: 0; }
+  .name { font-weight: 600; }
+  .meta { font-size: 0.82rem; color: var(--muted); }
+  .qty { width: 80px; flex-shrink: 0; }
+  .qty input { padding: 8px; text-align: center; }
+  .actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding-top: 10px;
+  }
+  .empty { color: var(--muted); text-align: center; padding: 20px 0; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .bar input { flex: 1; min-width: 150px; }
+  .hidden { display: none; }
+  .done .name { text-decoration: line-through; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header><h1>🛒 Lista della Spesa</h1></header>
+
+<div class="tabs">
+  <button id="tab-prodotti" class="active" onclick="mostra('prodotti')">Prodotti</button>
+  <button id="tab-lista" onclick="mostra('lista')">La mia lista</button>
+</div>
+
+<main>
+  <!-- PRODOTTI -->
+  <section id="sez-prodotti">
+    <div class="card">
+      <h2 id="titolo-form">Aggiungi prodotto</h2>
+      <div class="grid">
+        <div class="full">
+          <label>Nome prodotto</label>
+          <input id="f-nome" placeholder="Es. Mele">
+        </div>
+        <div>
+          <label>Categoria</label>
+          <select id="f-categoria"></select>
+        </div>
+        <div>
+          <label>Unità</label>
+          <select id="f-unita">
+            <option value="kg">Chili (kg)</option>
+            <option value="pz">Pezzi</option>
+            <option value="conf">Confezioni</option>
+            <option value="l">Litri</option>
+          </select>
+        </div>
+        <div>
+          <label>Prezzo (€ per unità)</label>
+          <input id="f-prezzo" type="number" step="0.01" min="0" placeholder="Es. 2.49">
+        </div>
+        <div>
+          <label>Supermercato</label>
+          <input id="f-super" list="lista-super" placeholder="Es. Esselunga">
+          <datalist id="lista-super"></datalist>
+        </div>
+        <div class="full" style="display:flex; gap:8px;">
+          <button class="btn" onclick="salvaProdotto()">Salva</button>
+          <button class="btn secondary hidden" id="btn-annulla" onclick="resetForm()">Annulla</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cosa ti serve?</h2>
+      <div class="bar">
+        <input id="cerca" placeholder="Cerca prodotto..." oninput="disegnaProdotti()">
+      </div>
+      <div id="elenco-prodotti"></div>
+    </div>
+  </section>
+
+  <!-- LISTA -->
+  <section id="sez-lista" class="hidden">
+    <div class="card">
+      <h2>Lista della spesa</h2>
+      <div class="bar">
+        <button class="btn secondary small" onclick="copiaLista()">📋 Copia lista</button>
+        <button class="btn secondary small" onclick="svuotaLista()">Svuota lista</button>
+      </div>
+      <div id="elenco-lista"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const CATEGORIE = ["Frutta", "Verdura", "Carne", "Pesce", "Latticini", "Pane e Pasta",
+  "Dispensa", "Surgelati", "Bevande", "Igiene", "Detersivi", "Altro"];
+const KEY = "spesa-dati-v1";
+
+let dati = { prodotti: [] };
+let inModifica = null;
+
+function carica() {
+  try {
+    const s = localStorage.getItem(KEY);
+    if (s) dati = JSON.parse(s);
+  } catch (e) {}
+}
+function salva() {
+  try { localStorage.setItem(KEY, JSON.stringify(dati)); } catch (e) {}
+}
+
+function euro(n) { return "€ " + (Number(n) || 0).toFixed(2).replace(".", ","); }
+function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function initForm() {
+  document.getElementById("f-categoria").innerHTML =
+    CATEGORIE.map(c => `<option>${c}</option>`).join("");
+  aggiornaSupermercati();
+}
+
+function aggiornaSupermercati() {
+  const sup = [...new Set(dati.prodotti.map(p => p.supermercato).filter(Boolean))];
+  document.getElementById("lista-super").innerHTML =
+    sup.map(s => `<option value="${esc(s)}">`).join("");
+}
+
+function salvaProdotto() {
+  const nome = document.getElementById("f-nome").value.trim();
+  if (!nome) { alert("Scrivi il nome del prodotto"); return; }
+  const p = {
+    nome,
+    categoria: document.getElementById("f-categoria").value,
+    unita: document.getElementById("f-unita").value,
+    prezzo: parseFloat(document.getElementById("f-prezzo").value) || 0,
+    supermercato: document.getElementById("f-super").value.trim()
+  };
+  if (inModifica) {
+    Object.assign(dati.prodotti.find(x => x.id === inModifica), p);
+  } else {
+    p.id = Date.now().toString(36);
+    p.serve = false;
+    p.quantita = 1;
+    p.preso = false;
+    dati.prodotti.push(p);
+  }
+  salva();
+  resetForm();
+  aggiornaSupermercati();
+  disegnaProdotti();
+}
+
+function resetForm() {
+  inModifica = null;
+  document.getElementById("f-nome").value = "";
+  document.getElementById("f-prezzo").value = "";
+  document.getElementById("f-super").value = "";
+  document.getElementById("titolo-form").textContent = "Aggiungi prodotto";
+  document.getElementById("btn-annulla").classList.add("hidden");
+}
+
+function modifica(id) {
+  const p = dati.prodotti.find(x => x.id === id);
+  inModifica = id;
+  document.getElementById("f-nome").value = p.nome;
+  document.getElementById("f-categoria").value = p.categoria;
+  document.getElementById("f-unita").value = p.unita;
+  document.getElementById("f-prezzo").value = p.prezzo || "";
+  document.getElementById("f-super").value = p.supermercato || "";
+  document.getElementById("titolo-form").textContent = "Modifica prodotto";
+  document.getElementById("btn-annulla").classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function elimina(id) {
+  if (!confirm("Eliminare questo prodotto?")) return;
+  dati.prodotti = dati.prodotti.filter(x => x.id !== id);
+  salva();
+  disegnaProdotti();
+}
+
+function toggleServe(id, val) {
+  dati.prodotti.find(x => x.id === id).serve = val;
+  salva();
+}
+function setQuantita(id, val) {
+  const p = dati.prodotti.find(x => x.id === id);
+  p.quantita = parseFloat(val) || 0;
+  p.serve = p.quantita > 0;
+  salva();
+  disegnaProdotti();
+}
+
+function disegnaProdotti() {
+  const q = document.getElementById("cerca").value.toLowerCase();
+  const lista = dati.prodotti.filter(p => p.nome.toLowerCase().includes(q));
+  const box = document.getElementById("elenco-prodotti");
+  if (!lista.length) {
+    box.innerHTML = `<div class="empty">Nessun prodotto. Aggiungine uno qui sopra!</div>`;
+    return;
+  }
+  let html = "";
+  CATEGORIE.forEach(cat => {
+    const items = lista.filter(p => p.categoria === cat)
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+    if (!items.length) return;
+    html += `<h3>${cat}</h3>`;
+    items.forEach(p => {
+      const step = p.unita === "kg" || p.unita === "l" ? "0.1" : "1";
+      html += `
+      <div class="row">
+        <input type="checkbox" ${p.serve ? "checked" : ""} onchange="toggleServe('${p.id}', this.checked)">
+        <div class="info">
+          <div class="name">${esc(p.nome)}</div>
+          <div class="meta">${p.prezzo ? euro(p.prezzo) + " / " + p.unita : "prezzo non inserito"}${p.supermercato ? " · " + esc(p.supermercato) : ""}</div>
+        </div>
+        <div class="qty"><input type="number" min="0" step="${step}" value="${p.quantita}" onchange="setQuantita('${p.id}', this.value)" title="Quantità in ${p.unita}"></div>
+        <div class="actions">
+          <button class="btn secondary small" onclick="modifica('${p.id}')">✏️</button>
+          <button class="btn danger small" onclick="elimina('${p.id}')">🗑️</button>
+        </div>
+      </div>`;
+    });
+  });
+  box.innerHTML = html;
+}
+
+function disegnaLista() {
+  const items = dati.prodotti.filter(p => p.serve);
+  const box = document.getElementById("elenco-lista");
+  if (!items.length) {
+    box.innerHTML = `<div class="empty">La lista è vuota. Spunta i prodotti che ti servono nella sezione Prodotti.</div>`;
+    return;
+  }
+  const gruppi = {};
+  items.forEach(p => {
+    const s = p.supermercato || "Supermercato non indicato";
+    (gruppi[s] = gruppi[s] || []).push(p);
+  });
+  let html = "", totale = 0;
+  Object.keys(gruppi).sort().forEach(s => {
+    let sub = 0;
+    html += `<h3>🏪 ${esc(s)}</h3>`;
+    gruppi[s].sort((a, b) => CATEGORIE.indexOf(a.categoria) - CATEGORIE.indexOf(b.categoria))
+      .forEach(p => {
+        const costo = p.prezzo * p.quantita;
+        sub += costo;
+        html += `
+        <div class="row ${p.preso ? "done" : ""}">
+          <input type="checkbox" ${p.preso ? "checked" : ""} onchange="togglePreso('${p.id}', this.checked)">
+          <div class="info">
+            <div class="name">${esc(p.nome)} — ${p.quantita} ${p.unita}</div>
+            <div class="meta">${p.categoria}${p.prezzo ? " · " + euro(costo) : ""}</div>
+          </div>
+        </div>`;
+      });
+    html += `<div class="meta" style="text-align:right">Subtotale: ${euro(sub)}</div>`;
+    totale += sub;
+  });
+  html += `<div class="total"><span>Totale stimato</span><span>${euro(totale)}</span></div>`;
+  box.innerHTML = html;
+}
+
+function togglePreso(id, val) {
+  dati.prodotti.find(x => x.id === id).preso = val;
+  salva();
+  disegnaLista();
+}
+
+function svuotaLista() {
+  if (!confirm("Togliere tutti i prodotti dalla lista? (restano salvati nel catalogo)")) return;
+  dati.prodotti.forEach(p => { p.serve = false; p.preso = false; });
+  salva();
+  disegnaLista();
+  disegnaProdotti();
+}
+
+function copiaLista() {
+  const items = dati.prodotti.filter(p => p.serve);
+  if (!items.length) return;
+  const testo = "🛒 Lista della spesa\n" +
+    items.map(p => `- ${p.nome}: ${p.quantita} ${p.unita}${p.supermercato ? " (" + p.supermercato + ")" : ""}`).join("\n");
+  navigator.clipboard.writeText(testo).then(() => alert("Lista copiata!"))
+    .catch(() => prompt("Copia la lista:", testo));
+}
+
+function mostra(sez) {
+  document.getElementById("sez-prodotti").classList.toggle("hidden", sez !== "prodotti");
+  document.getElementById("sez-lista").classList.toggle("hidden", sez !== "lista");
+  document.getElementById("tab-prodotti").classList.toggle("active", sez === "prodotti");
+  document.getElementById("tab-lista").classList.toggle("active", sez === "lista");
+  if (sez === "lista") disegnaLista(); else disegnaProdotti();
+}
+
+carica();
+initForm();
+disegnaProdotti();
+</script>
+</body>
+</html>
